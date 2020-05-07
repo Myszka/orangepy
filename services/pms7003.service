@@ -1,0 +1,10 @@
+[Unit]
+Description=PolandAOD powers on PMS7003
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/get_pms7003.py &
+
+[Install]
+WantedBy=multi-user.target
+
