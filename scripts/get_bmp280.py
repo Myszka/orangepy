@@ -4,15 +4,16 @@ import os
 import smbus
 import time
 import sys
+import socket
 from datetime import datetime,timedelta
 from bmp280 import BMP280
 
 datadir='/var/data/bmp280'
 filenm='bmp280'
-IDstacji=30102
+hostname = socket.gethostname()
+IDstacji = 30100+int(hostname[-2:])
 
 DEVICE = 0x76 # Default device I2C address
-
 
 bus = smbus.SMBus(0)
 
@@ -51,18 +52,16 @@ while True:
 		try:
 			temperature = bmp280.get_temperature()
 			pressure =  bmp280.get_pressure()
-			fname=filetowrite()                
+			fname=filetowrite()
 			with open(fname, 'a') as f:
 				f.write(str(IDstacji)+','+str(datetime.utcnow().year)+','+str(datetime.utcnow().month)+','+str(datetime.utcnow().day)+','+str(datetime.utcnow().hour)+','+str(datetime.utcnow().minute)+','+str(datetime.utcnow().second)+','+str(date2matlab(datetime.now()))+','+str(pressure)+','+str(temperature)+'\n')
-				print pressure
+				print(pressure)
 				f.closed
 			time.sleep(0.8)
                         errcnt = 0
-		    
+
 		except:
-			print "ERROR"
+			print("ERROR")
                         errcnt+=1
                         if errcnt > 10:
                             sys.exit(66)
-
-

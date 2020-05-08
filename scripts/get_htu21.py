@@ -13,7 +13,8 @@ from datetime import datetime,timedelta
 
 datadir='/var/data/htu21'
 filenm='htu21'
-IDstacji=30102
+hostname = socket.gethostname()
+IDstacji = 30100+int(hostname[-2:])
 
 HTU21D_ADDR = 0x40
 CMD_READ_TEMP_HOLD = b"\xE3"

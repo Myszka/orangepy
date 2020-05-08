@@ -14,7 +14,8 @@ batcmd="cat /sys/class/leds/orangepi\:green\:pwr/brightness"
 
 datadir='/var/data/PMS7003bis'
 filenm='pms7003'
-IDstacji=30102
+hostname = socket.gethostname()
+IDstacji = 30100+int(hostname[-2:])
 
 HTU21D_ADDR = 0x40
 CMD_READ_TEMP_HOLD = b"\xE3"
@@ -136,7 +137,7 @@ def blink():
 		os.system("echo 0 > /sys/class/leds/orangepi\:green\:pwr/brightness")
 	elif (int(result)==0):
 		os.system("echo 1 > /sys/class/leds/orangepi\:green\:pwr/brightness")
-	
+
 
 def readbit(inp,bit):
 	'''
@@ -231,7 +232,7 @@ def filetowrite():
     fname=directory + name
     if os.path.isfile(fname)==False:
         f = open(fname,'w')
-        f.write("'YEAR','MONTH','DAY','HOUR','MINUTE','SECOND','TIME','PM1','PM2.5','PM10','Bin0','Bin1','Bin2','Bin3','Bin4','Bin5','Temperature','Humidity'\n")
+        f.write("'STATIONID','YEAR','MONTH','DAY','HOUR','MINUTE','SECOND','TIME','PM1','PM2.5','PM10','Bin0','Bin1','Bin2','Bin3','Bin4','Bin5','Temperature','Humidity'\n")
         f.close()
     return fname
 
