@@ -1,0 +1,7 @@
+wheel
+setuptools
+smbus
+requests
+gzip
+pyserial
+bmp280

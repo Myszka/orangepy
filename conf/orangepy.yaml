@@ -1,0 +1,11 @@
+id: pkin01
+server: http://212.87.6.244
+port: 8000
+sensors:
+- sensor: pms7003
+  resource: /var/data/PMS7003/
+  columns: {pm1: 8, pm100: 10, pm25: 9, time: 7}
+
+- sensor: pms7003bis
+  resource: /var/data/PMS7003bis/
+  columns: {pm1: 8, pm100: 10, pm25: 9, time: 7}
