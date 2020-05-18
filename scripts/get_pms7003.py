@@ -7,6 +7,7 @@ import array
 import time
 import io, fcntl
 import subprocess
+import socket
 from datetime import datetime,timedelta
 import os
 

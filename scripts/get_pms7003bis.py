@@ -6,6 +6,7 @@ import struct
 import array
 import time
 import io, fcntl
+import socket
 import subprocess
 from datetime import datetime,timedelta
 import os

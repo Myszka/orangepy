@@ -7,6 +7,7 @@ import time
 import io, fcntl
 import datetime, time
 import os
+import socket
 from datetime import datetime,timedelta
 
 datadir='/var/data/htu21'
@@ -158,7 +159,7 @@ while True:
 	if inittime!=datetime.now().second:
 	    inittime=datetime.now().second
 
-            try:
+    try:
                 fname=filetowrite()
                 tmpy=readtemp()
     	    	print datetime.now().isoformat()
@@ -169,5 +170,5 @@ while True:
                 f.closed
 
 
-            except Exception as e:
+    except Exception as e:
                 print "ERROR"
