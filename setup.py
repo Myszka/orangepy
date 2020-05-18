@@ -34,7 +34,7 @@ setup(
     keywords=['pms7003','HTU21','bmp280','PolandAOD','sensors','measurements','environmental'],
     scripts=script,
     data_files=[('share/orangepy', services),('etc', ['conf/orangepy.yaml'])],
-    install_requires=['smbus','bmp280','pyserial'],
+    install_requires=['smbus','bmp280','pyserial', 'spidev'],
 )
 
 # copy unit files to /etc/ folder
