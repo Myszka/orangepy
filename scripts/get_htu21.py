@@ -1,8 +1,6 @@
 #!/usr/bin/python
-import serial
 import smbus
 import time
-import gzip
 import struct
 import array
 import time
