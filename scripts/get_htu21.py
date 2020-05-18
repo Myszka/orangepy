@@ -156,19 +156,19 @@ def filetowrite():
 inittime=datetime.now().second
 
 while True:
-	if inittime!=datetime.now().second:
-	    inittime=datetime.now().second
+    if inittime!=datetime.now().second:
+        inittime=datetime.now().second
 
     try:
-                fname=filetowrite()
-                tmpy=readtemp()
-    	    	print datetime.now().isoformat()
-                print tmpy
-                with open(fname, 'a') as f:
-                    f.write(str(IDstacji)+','+str(datetime.utcnow().year)+','+str(datetime.utcnow().month)+','+str(datetime.utcnow().day)+','+str(datetime.utcnow().hour)+','+str(datetime.utcnow().minute)+','+str(datetime.utcnow().second)+','+str(date2matlab(datetime.now()))+','+str(tmpy[0])+','+str(tmpy[1])+'\n')
-                time.sleep(0.7)
-                f.closed
+        fname=filetowrite()
+        tmpy=readtemp()
+    	print datetime.now().isoformat()
+        print tmpy
 
+        with open(fname, 'a') as f:
+            f.write(str(IDstacji)+','+str(datetime.utcnow().year)+','+str(datetime.utcnow().month)+','+str(datetime.utcnow().day)+','+str(datetime.utcnow().hour)+','+str(datetime.utcnow().minute)+','+str(datetime.utcnow().second)+','+str(date2matlab(datetime.now()))+','+str(tmpy[0])+','+str(tmpy[1])+'\n')
+            time.sleep(0.7)
+            f.closed
 
     except Exception as e:
-                print "ERROR"
+        print "ERROR"
