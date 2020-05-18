@@ -147,7 +147,7 @@ def readbit(inp,bit):
 	'''
 	Read bit data from SEN0177 (16-bytes)
 	'''
-	return (ord(inp[bit]) << 8) + ord(inp[bit+1])
+	return (inp[bit] << 8) + inp[bit+1]
 
 def checkval(inp):
 	'''
@@ -155,7 +155,7 @@ def checkval(inp):
 	'''
 	val=0
 	for i in range(30):
-		val=val+ord(inp[i])
+		val=val + inp[i]
 	return val
 
 def readsen177(serial):
@@ -163,7 +163,7 @@ def readsen177(serial):
 	Read data from SEN0177 by serial port and return list of all measured values
 	'''
 	try:
-		dane=serial.read(32)
+		dane=bytearray(serial.read(32))
 		#concentration of PM1.0, ug/m3
 		PM1=readbit(dane,4)
 		#concentration of PM2.5, ug/m3
