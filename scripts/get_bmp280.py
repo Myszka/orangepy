@@ -12,6 +12,9 @@ filenm='bmp280'
 hostname = socket.gethostname()
 IDstacji = 30100+int(hostname[-2:])
 
+if not os.path.exists(datadir):
+    os.makedirs(datadir)
+
 DEVICE = 0x76 # Default device I2C address
 
 bus = smbus.SMBus(0)

@@ -14,6 +14,9 @@ filenm='htu21'
 hostname = socket.gethostname()
 IDstacji = 30100+int(hostname[-2:])
 
+if not os.path.exists(datadir):
+    os.makedirs(datadir)
+
 HTU21D_ADDR = 0x40
 CMD_READ_TEMP_HOLD = b"\xE3"
 CMD_READ_HUM_HOLD = b"\xE5"
