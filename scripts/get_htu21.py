@@ -7,13 +7,20 @@ import time
 import io, fcntl
 import datetime, time
 import os
+import sys
 import socket
+import sd_notify
 from datetime import datetime,timedelta
 
 datadir='/var/data/htu21'
 filenm='htu21'
 hostname = socket.gethostname()
 IDstacji = 30100+int(hostname[-2:])
+
+notify = sd_notify.Notifier()
+
+if notify.enabled():
+	notify.status("Initialising HTU21 ...")
 
 if not os.path.exists(datadir):
     os.makedirs(datadir)
@@ -154,6 +161,11 @@ def filetowrite():
     return fname
 
 inittime=datetime.now().second
+errcnt = 0
+
+if notify.enabled():
+	notify.ready()
+	notify.status("Starting measurements ...")
 
 while True:
     if inittime!=datetime.now().second:
@@ -169,6 +181,12 @@ while True:
             f.write(str(IDstacji)+','+str(datetime.utcnow().year)+','+str(datetime.utcnow().month)+','+str(datetime.utcnow().day)+','+str(datetime.utcnow().hour)+','+str(datetime.utcnow().minute)+','+str(datetime.utcnow().second)+','+str(date2matlab(datetime.now()))+','+str(tmpy[0])+','+str(tmpy[1])+'\n')
             time.sleep(0.7)
             f.closed
+        errcnt = 0
+        if notify.enabled():
+        	notify.notify()
 
     except Exception as e:
         print("ERROR")
+        errcnt+=1
+        if errcnt > 10:
+        	sys.exit(66)

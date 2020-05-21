@@ -4,7 +4,10 @@ Description=PolandAOD power on HTU21 thermometer
 [Service]
 Type=simple
 ExecStart=/usr/local/bin/get_htu21.py &
+Type=notify
+WatchdogSec=15
+Restart=on-failure
+RestartSec=30
 
 [Install]
 WantedBy=multi-user.target
-

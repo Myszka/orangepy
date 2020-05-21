@@ -160,6 +160,7 @@ while True:
 					+toascii(pmy)+'\n')
 				f.closed
 				blink()
+				errcnt = 0
 				if notify.enabled():
 					notify.notify()
 
