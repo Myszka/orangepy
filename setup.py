@@ -2,7 +2,7 @@ from distutils.core import setup
 import sys
 from glob import glob
 import os
-from shutil import copy
+#from shutil import copy
 
 sys.prefix='/usr/local/'
 # User-friendly description from README.md
@@ -36,5 +36,5 @@ setup(
 )
 
 # copy unit files to /etc/ folder
-for file in glob(sys.prefix+'share/orangepy/*.service'):
-    copy(file, '/etc/systemd/system')
+#for file in glob(sys.prefix+'share/orangepy/*.service'):
+#    copy(file, '/etc/systemd/system')
