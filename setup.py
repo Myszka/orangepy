@@ -20,10 +20,7 @@ conf = glob('conf/*')
 setup(
     name="orangepy",
 
-    # Packages to include into the distribution
-    # packages=find_packages('.')
-
-    version='0.1.0',
+    version='0.1.1',
     license='GPLv3',
 
     description='PolandAOD set of scripts for environmental measurements based on Orange Pi with armbian',
