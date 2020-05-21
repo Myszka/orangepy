@@ -2,9 +2,11 @@
 Description=PolandAOD powers on PMS7003bis
 
 [Service]
-Type=simple
 ExecStart=/usr/local/bin/get_pms7003bis.py &
+Type=notify
+WatchdogSec=15
+Restart=on-failure
+RestartSec=30
 
 [Install]
 WantedBy=multi-user.target
-
