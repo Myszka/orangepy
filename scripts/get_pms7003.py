@@ -157,7 +157,7 @@ while True:
 				with open(fname, 'a') as f:
 					f.write(str(IDstacji)+','+str(datetime.utcnow().year)+','+str(datetime.utcnow().month)+','+str(datetime.utcnow().day)+',' \
 					+str(datetime.utcnow().hour)+','+str(datetime.utcnow().minute)+','+str(datetime.utcnow().second)+','+str(date2matlab(datetime.now()))+',' \
-					+toascii(pmy)+'\n')
+					+toascii(pmy)[:-1]+'\n')
 				f.closed
 				blink()
 				errcnt = 0
