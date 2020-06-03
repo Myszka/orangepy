@@ -44,7 +44,7 @@ def blink(led=0):
 
 	batcmd="cat /sys/class/leds/orangepi\:"+colour+"/brightness"
 	result = subprocess.check_output(batcmd, shell=True)
-	if (int(result)==1):
+	if (int(result) > 0):
 		os.system("echo 0 > /sys/class/leds/orangepi\:"+colour+"/brightness")
 	elif (int(result)==0):
 		os.system("echo 1 > /sys/class/leds/orangepi\:"+colour+"/brightness")
