@@ -20,7 +20,7 @@ conf = glob('conf/*')
 setup(
     name="orangepy",
 
-    version='0.1.1',
+    version='0.2.0',
     license='GPLv3',
 
     description='PolandAOD set of scripts for environmental measurements based on Orange Pi with armbian',
@@ -30,6 +30,7 @@ setup(
     author_email='mich@igf.fuw.edu.pl',
     url='https://github.com/Myszka/orangepy',
     keywords=['pms7003','HTU21','bmp280','PolandAOD','sensors','measurements','environmental'],
+	py_modules =['orangepisensors']
     scripts=script,
     data_files=[('share/orangepy', services),('etc', conf)],
     install_requires=['smbus','bmp280','pyserial', 'spidev', 'sd-notify'],
