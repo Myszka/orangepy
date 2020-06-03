@@ -33,13 +33,21 @@ def savetofile(datadir,filenm,id,parameters,measurements):
 
 	return fname
 
-def blink():
-	batcmd="cat /sys/class/leds/orangepi\:red\:status/brightness"
+def blink(led=0):
+	red = "red\:status"
+	green = "green\:pwr"
+
+	if led == 0:
+		colour = red
+	else:
+		colour = green
+
+	batcmd="cat /sys/class/leds/orangepi\:"+colour+"/brightness"
 	result = subprocess.check_output(batcmd, shell=True)
 	if (int(result)==1):
-		os.system("echo 0 > /sys/class/leds/orangepi\:red\:status/brightness")
+		os.system("echo 0 > /sys/class/leds/orangepi\:"+colour+"/brightness")
 	elif (int(result)==0):
-		os.system("echo 1 > /sys/class/leds/orangepi\:red\:status/brightness")
+		os.system("echo 1 > /sys/class/leds/orangepi\:"+colour+"/brightness")
 
 def readbit(inp,bit):
 	'''

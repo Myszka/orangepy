@@ -68,7 +68,7 @@ def measurepms7003(port='/dev/ttyS2',timeavg=60,timeint=1):
 			if checkval(dane)==readbit(dane,30):
 				measurements.append([datetime.now(),[PM1,PM25,PM10,bin1,bin2,bin3,bin4,bin5,bin6]])
 				logging.info("PM 0: %d, PM 2.5: %d, PM 10: %d, bin 0: %d" % (measurements[-1][1][0],measurements[-1][1][1],measurements[-1][1][2],measurements[-1][1][3]))
-				blink()
+				blink(1)
 				if notify.enabled():
 					notify.notify()
 			else:
