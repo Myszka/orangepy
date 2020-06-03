@@ -20,8 +20,10 @@ datadir='/var/data/test'
 filenm='htu21'
 
 format = "[%(asctime)s] %(message)s"
-logging.basicConfig(format=format, level=logging.WARN,datefmt="%Y-%m-%d %H:%M:%S")
-logging.info("Starting HTU21")
+logging.basicConfig(format=format, level=logging.INFO ,datefmt="%Y-%m-%d %H:%M:%S")
+logging.root.setLevel(logging.WARNING)
+
+logging.warning("Starting HTU21")
 
 notify = sd_notify.Notifier()
 if notify.enabled():
@@ -133,7 +135,7 @@ def measurehtu21(termometr,timeavg=60,timeint=1):
 			notify.notify()
 
 		time.sleep(timeint)
-
+	logging.warning("Temperature: %f, Humidity: %f" % (measurements[-1][1][0],measurements[-1][1][1]))
 	return measurements
 
 
@@ -147,7 +149,7 @@ if notify.enabled():
 	notify.ready()
 	notify.status("Measuring ...")
 
-logging.info("Main loop of HTU21 ready")
+logging.warning("Main loop of HTU21 ready")
 errcnt = 0
 
 while True:
@@ -157,7 +159,7 @@ while True:
 		t1.start()
 		errcnt = 0
 	except Exception as e:
-		logging.warning("Temperature data read error: {}".format(e))
+		logging.critical("Temperature data read error: {}".format(e))
 		errcnt += 1
 		time.sleep(1)
 		if errcnt > 10:

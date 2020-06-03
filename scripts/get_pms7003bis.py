@@ -21,7 +21,9 @@ filenm='pms7003'
 
 format = "[%(asctime)s] %(message)s"
 logging.basicConfig(format=format, level=logging.INFO, datefmt="%Y-%m-%d %H:%M:%S")
-logging.info("Starting PMS7003bis")
+logging.root.setLevel(logging.WARNING)
+logging.warning("Starting PMS7003bis")
+
 
 notify = sd_notify.Notifier()
 if notify.enabled():
@@ -78,13 +80,14 @@ def measurepms7003(port='/dev/ttyS2',timeavg=60,timeint=1):
 
 		time.sleep(timeint)
 
+	logging.warning("PM 0: %d, PM 2.5: %d, PM 10: %d, bin 0: %d" % (measurements[-1][1][0],measurements[-1][1][1],measurements[-1][1][2],measurements[-1][1][3]))
 	return measurements
 
 if notify.enabled():
 	notify.ready()
 	notify.status("Measuring ...")
 
-logging.info("Main loop of PMS7003bis ready")
+logging.warning("Main loop of PMS7003bis ready")
 
 while True:
 	try:
@@ -93,7 +96,7 @@ while True:
 		t1.start()
 		errcnt = 0
 	except Exception as e:
-		logging.warning("PMS7003bis data read error: {}".format(e))
+		logging.critical("PMS7003bis data read error: {}".format(e))
 		errcnt += 1
 		time.sleep(1)
 		if errcnt > 10:

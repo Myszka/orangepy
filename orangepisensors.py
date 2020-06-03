@@ -3,10 +3,6 @@ import os
 import logging
 import subprocess
 
-format = "[%(asctime)s] %(message)s"
-logging.basicConfig(format=format, level=logging.INFO,datefmt="%Y-%m-%d %H:%M:%S")
-
-
 def date2matlab(dt):
    ord = dt.toordinal()
    mdn = dt + timedelta(days = 366)
@@ -30,7 +26,7 @@ def savetofile(datadir,filenm,id,parameters,measurements):
 	if type(measurements) is not list:
 		logging.warning("Measurements error, no data")
 		return 2
-	logging.info("Writing to file %s" % fname)
+	logging.warning("Writing to file %s" % fname)
 	with open(fname, 'a') as f:
 		for ms in measurements:
 			f.write(str(id)+','+str(ms[0].year)+','+str(ms[0].month)+','+str(ms[0].day)+','+str(ms[0].hour)+','+str(ms[0].minute)+','+str(ms[0].second)+','+str(date2matlab(ms[0]))+','+''.join([str(x)+',' for x in ms[1]])[:-1]+'\n')
