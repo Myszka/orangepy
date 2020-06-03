@@ -85,21 +85,7 @@ if notify.enabled():
 	notify.ready()
 	notify.status("Measuring ...")
 
-<<<<<<< HEAD
 logging.info("Main loop of PMS7003 ready")
-=======
-			if pmy[-1]==1:
-				fname=filetowrite()
-				with open(fname, 'a') as f:
-					f.write(str(IDstacji)+','+str(datetime.utcnow().year)+','+str(datetime.utcnow().month)+','+str(datetime.utcnow().day)+',' \
-					+str(datetime.utcnow().hour)+','+str(datetime.utcnow().minute)+','+str(datetime.utcnow().second)+','+str(date2matlab(datetime.now()))+',' \
-					+toascii(pmy)[:-1]+'\n')
-				f.closed
-				blink()
-				errcnt = 0
-				if notify.enabled():
-					notify.notify()
->>>>>>> c7f9b1c736fc5b91bfa28e4b2c718733c455b6a9
 
 while True:
 	try:
