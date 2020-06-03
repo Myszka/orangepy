@@ -16,7 +16,7 @@ import threading
 from orangepisensors import filetowrite, savetofile, date2matlab, readbit, checkval, blink
 import uuid
 
-datadir='/var/data/test'
+datadir='/var/data/pms7003'
 filenm='pms7003'
 
 format = "[%(asctime)s] %(message)s"

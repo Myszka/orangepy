@@ -20,7 +20,7 @@ datadir='/var/data/test'
 filenm='htu21'
 
 format = "[%(asctime)s] %(message)s"
-logging.basicConfig(format=format, level=logging.INFO,datefmt="%Y-%m-%d %H:%M:%S")
+logging.basicConfig(format=format, level=logging.WARN,datefmt="%Y-%m-%d %H:%M:%S")
 logging.info("Starting HTU21")
 
 notify = sd_notify.Notifier()
@@ -152,7 +152,7 @@ errcnt = 0
 
 while True:
 	try:
-		measurements = measurehtu21(term,10,1)
+		measurements = measurehtu21(term)
 		t1 = threading.Thread(target=savetofile, args=(datadir,filenm,uuid.getnode(),['Temperature','Humidity'],measurements))
 		t1.start()
 		errcnt = 0
