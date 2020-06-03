@@ -30,7 +30,7 @@ setup(
     author_email='mich@igf.fuw.edu.pl',
     url='https://github.com/Myszka/orangepy',
     keywords=['pms7003','HTU21','bmp280','PolandAOD','sensors','measurements','environmental'],
-	py_modules =['orangepisensors']
+	py_modules =['orangepisensors'],
     scripts=script,
     data_files=[('share/orangepy', services),('etc', conf)],
     install_requires=['smbus','bmp280','pyserial', 'spidev', 'sd-notify'],
