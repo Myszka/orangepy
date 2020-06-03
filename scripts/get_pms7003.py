@@ -12,165 +12,91 @@ from datetime import datetime,timedelta
 import sys
 import sd_notify
 import os
+import logging
+import threading
+from orangepisensors import filetowrite, savetofile, date2matlab, readbit, checkval, blink
+import uuid
 
-batcmd="cat /sys/class/leds/orangepi\:red\:status/brightness"
-
-datadir='/var/data/PMS7003'
+datadir='/var/data/test'
 filenm='pms7003'
-hostname = socket.gethostname()
-IDstacji = 30100+int(hostname[-2:])
+
+format = "[%(asctime)s] %(message)s"
+logging.basicConfig(format=format, level=logging.INFO, datefmt="%Y-%m-%d %H:%M:%S")
+logging.info("Starting PMS7003")
 
 notify = sd_notify.Notifier()
-
 if notify.enabled():
 	notify.status("Initialising PMS7003 ...")
 
-if not os.path.exists(datadir):
-    os.makedirs(datadir)
-
-def initsen177(port='/dev/ttyS1'):
-	'''
-	Initialize serial of particles counter SEN0177 or PMS7003
-	'''
+def measurepms7003(port='/dev/ttyS1',timeavg=60,timeint=1):
 	try:
 		ser = serial.Serial(port, 9600)
 		ser.flushInput()
 		ser.flushOutput()
-		return ser
 	except Exception as e:
-		print ("Serial initialization error: {}".format(e))
+		logging.critical("Serial initialization error: {}".format(e))
 		return 99
 
+	measurements = []
+	t0 = datetime.now()
+	tend = t0+timedelta(seconds=timeavg)
 
-def blink():
-	batcmd="cat /sys/class/leds/orangepi\:red\:status/brightness"
-	result = subprocess.check_output(batcmd, shell=True)
-	if (int(result)==1):
-		os.system("echo 0 > /sys/class/leds/orangepi\:red\:status/brightness")
-	elif (int(result)==0):
-		os.system("echo 1 > /sys/class/leds/orangepi\:red\:status/brightness")
+	while datetime.now() < tend:
+		try:
+			dane=bytearray(ser.read(32))
+			#concentration of PM1.0, ug/m3
+			PM1=readbit(dane,4)
+			#concentration of PM2.5, ug/m3
+			PM25=readbit(dane,6)
+			#concentration of PM10.0, ug/m3
+			PM10=readbit(dane,8)
+			#the number of particulate of diameter above 0.3um in 0.1 liters of air
+			bin1=readbit(dane,16)
+			#the number of particulate of diameter above 0.5um in 0.1 liters of air
+			bin2=readbit(dane,18)
+			#the number of particulate of diameter above 1.0um in 0.1 liters of air
+			bin3=readbit(dane,20)
+			#the number of particulate of diameter above 2.5um in 0.1 liters of air
+			bin4=readbit(dane,22)
+			#the number of particulate of diameter above 5.0um in 0.1 liters of air
+			bin5=readbit(dane,24)
+			#the number of particulate of diameter above 10.0um in 0.1 liters of air
+			bin6=readbit(dane,26)
+			ser.flushInput()
+			ser.flushOutput()
+			if checkval(dane)==readbit(dane,30):
+				measurements.append([datetime.now(),[PM1,PM25,PM10,bin1,bin2,bin3,bin4,bin5,bin6]])
+				logging.info("PM 0: %d, PM 2.5: %d, PM 10: %d, bin 0: %d" % (measurements[-1][1][0],measurements[-1][1][1],measurements[-1][1][2],measurements[-1][1][3]))
+				blink()
+				if notify.enabled():
+					notify.notify()
+			else:
+				logging.warning("PM checksum error")
 
+		except Exception as e:
+			logging.warning("PM data read error: {}".format(e))
+			return 55
 
-def readbit(inp,bit):
-	'''
-	Read bit data from SEN0177 (16-bytes)
-	'''
-	return (inp[bit] << 8) + inp[bit+1]
+		time.sleep(timeint)
 
-def checkval(inp):
-	'''
-	Calcaulate checksum for SEN0177 data
-	'''
-	val=0
-	for i in range(30):
-		val=val + inp[i]
-	return val
-
-def readsen177(serial):
-	'''
-	Read data from SEN0177 or PMS7003 by serial port and return list of all measured values
-	'''
-	try:
-		dane=bytearray(serial.read(32))
-		#concentration of PM1.0, ug/m3
-		PM1=readbit(dane,4)
-		#concentration of PM2.5, ug/m3
-		PM25=readbit(dane,6)
-		#concentration of PM10.0, ug/m3
-		PM10=readbit(dane,8)
-
-		#the number of particulate of diameter above 0.3um in 0.1 liters of air
-		bin1=readbit(dane,16)
-		#the number of particulate of diameter above 0.5um in 0.1 liters of air
-		bin2=readbit(dane,18)
-		#the number of particulate of diameter above 1.0um in 0.1 liters of air
-		bin3=readbit(dane,20)
-		#the number of particulate of diameter above 2.5um in 0.1 liters of air
-		bin4=readbit(dane,22)
-		#the number of particulate of diameter above 5.0um in 0.1 liters of air
-		bin5=readbit(dane,24)
-		#the number of particulate of diameter above 10.0um in 0.1 liters of air
-		bin6=readbit(dane,26)
-		ser.flushInput()
-		ser.flushOutput()
-		return [PM1,PM25,PM10,bin1,bin2,bin3,bin4,bin5,bin6,int(checkval(dane)==readbit(dane,30))]
-
-	except Exception as e:
-		print ("PM data read error: {}".format(e))
-		return 1
-
-def toascii(inp):
-	'''
-	Function to convert tables to ascii string lines
-	'''
-	out=''
-	for i in inp:
-		out=out+str(i)+','
-	return out
-
-def timestr():
-	'''
-	Return time string formated for the project
-	'''
-	return time.strftime('%Y,%m,%d,%H,%M,%S,', time.gmtime())
-
-
-def date2matlab(dt):
-   ord = dt.toordinal()
-   mdn = dt + timedelta(days = 366)
-   frac = (dt-datetime(dt.year,dt.month,dt.day,0,0,0)).seconds / (24.0 * 60.0 * 60.0)
-   return mdn.toordinal() + frac
-
-def filetowrite():
-    directory=datadir+'/' + datetime.utcnow().strftime("%Y%m")
-    if not os.path.exists(directory):
-     os.makedirs(directory)
-    name="/"+filenm+'_'+datetime.utcnow().isoformat()[:10]+".csv"
-    fname=directory + name
-    if os.path.isfile(fname)==False:
-        f = open(fname,'w')
-        f.write("'STATIONID','YEAR','MONTH','DAY','HOUR','MINUTE','SECOND','TIME','PM1','PM2.5','PM10','Bin0','Bin1','Bin2','Bin3','Bin4','Bin5','Checksum'\n")
-        f.close()
-    return fname
-
-
-
-ser=initsen177()
-inittime=datetime.now().second
-errcnt = 0
+	return measurements
 
 if notify.enabled():
 	notify.ready()
-	notify.status("Starting measurements ...")
+	notify.status("Measuring ...")
+
+logging.info("Main loop of PMS7003 ready")
 
 while True:
-	if inittime!=datetime.now().second:
-		inittime=datetime.now().second
-		print(datetime.now().isoformat())
-		try:
-			pmy=readsen177(ser)
-			print(pmy)
-			time.sleep(0.7)
-
-			if pmy[-1]==1:
-				fname=filetowrite()
-				with open(fname, 'a') as f:
-					f.write(str(IDstacji)+','+str(datetime.utcnow().year)+','+str(datetime.utcnow().month)+','+str(datetime.utcnow().day)+',' \
-					+str(datetime.utcnow().hour)+','+str(datetime.utcnow().minute)+','+str(datetime.utcnow().second)+','+str(date2matlab(datetime.now()))+',' \
-					+toascii(pmy)+'\n')
-				f.closed
-				blink()
-				errcnt = 0
-				if notify.enabled():
-					notify.notify()
-
-			else:
-				ser.close()
-				ser=initsen177()
-		except Exception as e:
-				ser.close()
-				ser=initsen177()
-				print("ERROR")
-				errcnt+=1
-				if errcnt > 10:
-					sys.exit(66)
+	try:
+		measurements = measurepms7003()
+		t1 = threading.Thread(target=savetofile, args=(datadir,filenm,uuid.getnode(),['PM1','PM2.5','PM10','Bin0','Bin1','Bin2','Bin3','Bin4','Bin5'],measurements))
+		t1.start()
+		errcnt = 0
+	except Exception as e:
+		logging.warning("PMS7003 data read error: {}".format(e))
+		errcnt += 1
+		time.sleep(1)
+		if errcnt > 10:
+			logging.critical("PMS7003 failed")
+			sys.exit(66)

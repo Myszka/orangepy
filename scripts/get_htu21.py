@@ -11,33 +11,25 @@ import sys
 import socket
 import sd_notify
 from datetime import datetime,timedelta
+import logging
+import threading
+from orangepisensors import filetowrite, savetofile, date2matlab
+import uuid
 
-datadir='/var/data/htu21'
+datadir='/var/data/test'
 filenm='htu21'
-hostname = socket.gethostname()
-IDstacji = 30100+int(hostname[-2:])
+
+format = "[%(asctime)s] %(message)s"
+logging.basicConfig(format=format, level=logging.INFO,datefmt="%Y-%m-%d %H:%M:%S")
+logging.info("Starting HTU21")
 
 notify = sd_notify.Notifier()
-
 if notify.enabled():
 	notify.status("Initialising HTU21 ...")
 
-if not os.path.exists(datadir):
-    os.makedirs(datadir)
-
-HTU21D_ADDR = 0x40
-CMD_READ_TEMP_HOLD = b"\xE3"
-CMD_READ_HUM_HOLD = b"\xE5"
-CMD_READ_TEMP_NOHOLD = b"\xF3"
-CMD_READ_HUM_NOHOLD = b"\xF5"
-CMD_WRITE_USER_REG = b"\xE6"
-CMD_READ_USER_REG = b"\xE7"
-CMD_SOFT_RESET = b"\xFE"
-I2C_SLAVE=0x0703
-
-
 class i2c(object):
    def __init__(self, device, bus):
+      I2C_SLAVE=0x0703
       self.fr = io.open("/dev/i2c-"+str(bus), "rb", buffering=0)
       self.fw = io.open("/dev/i2c-"+str(bus), "wb", buffering=0)
       # set device address
@@ -51,9 +43,14 @@ class i2c(object):
       self.fw.close()
       self.fr.close()
 
-
 class HTU21D(object):
     def __init__(self):
+        HTU21D_ADDR = 0x40
+        CMD_READ_TEMP_HOLD = b"\xE3"
+        CMD_READ_HUM_HOLD = b"\xE5"
+        CMD_WRITE_USER_REG = b"\xE6"
+        CMD_READ_USER_REG = b"\xE7"
+        CMD_SOFT_RESET = b"\xFE"
         self.dev = i2c(HTU21D_ADDR, 1)  # HTU21D 0x40, bus 1
         self.dev.write(CMD_SOFT_RESET)  # Soft reset
         time.sleep(.1)
@@ -91,6 +88,7 @@ class HTU21D(object):
             return False
 
     def read_temperature(self):
+        CMD_READ_TEMP_NOHOLD = b"\xF3"
         self.dev.write(CMD_READ_TEMP_NOHOLD)  # Measure temp
         time.sleep(.1)
         data = self.dev.read(3)
@@ -102,6 +100,7 @@ class HTU21D(object):
             return -255
 
     def read_humidity(self):
+        CMD_READ_HUM_NOHOLD = b"\xF5"
         temp_actual = self.read_temperature()  # For temperature coefficient compensation
         self.dev.write(CMD_READ_HUM_NOHOLD)  # Measure humidity
         time.sleep(.1)
@@ -121,72 +120,46 @@ class HTU21D(object):
         else:
             return -255
 
+def measurehtu21(termometr,timeavg=60,timeint=1):
+	measurements = []
+	t0 = datetime.now()
+	tend = t0+timedelta(seconds=timeavg)
 
-def readtemp():
-	'''
-	Read temperature and humidity from HTU21 on i2c bus 0, return data in list
-	'''
-	try:
-		# Get I2C bus
-		termometr=HTU21D()
-		temp=termometr.read_temperature()
-		humidity=termometr.read_humidity()
-		return [round(temp,2),round(humidity,2)]
+	while datetime.now() < tend:
+		measurements.append([datetime.now(),[round(termometr.read_temperature(),2), round(termometr.read_humidity(),2)]])
+		logging.info("Temperature: %f, Humidity: %f" % (measurements[-1][1][0],measurements[-1][1][1]))
 
-	except Exception as e:
-		print ("Temperature data read error: {}".format(e))
-		return 2
+		if notify.enabled():
+			notify.notify()
 
-presentTime=datetime.utcnow()
+		time.sleep(timeint)
 
-def date2matlab(dt):
-   ord = dt.toordinal()
-   mdn = dt + timedelta(days = 366)
-   frac = (dt-datetime(dt.year,dt.month,dt.day,0,0,0)).seconds / (24.0 * 60.0 * 60.0)
-   return mdn.toordinal() + frac
+	return measurements
 
 
-
-
-def filetowrite():
-    directory=datadir+'/' + datetime.utcnow().strftime("%Y%m")
-    if not os.path.exists(directory):
-     os.makedirs(directory)
-    name="/"+filenm+'_'+datetime.utcnow().isoformat()[:10]+".csv"
-    fname=directory + name
-    if os.path.isfile(fname)==False:
-        f = open(fname,'w')
-        f.write("'STATIONID','YEAR','MONTH','DAY','HOUR','MINUTE','SECOND','TIME','Temperature','Humidity'\n")
-        f.close()
-    return fname
-
-inittime=datetime.now().second
-errcnt = 0
+try:
+	term = HTU21D()
+except Exception as e:
+	logging.critical("HTU21 initialization failed: %s" % e)
+	sys.exit(55)
 
 if notify.enabled():
 	notify.ready()
-	notify.status("Starting measurements ...")
+	notify.status("Measuring ...")
+
+logging.info("Main loop of HTU21 ready")
+errcnt = 0
 
 while True:
-    if inittime!=datetime.now().second:
-        inittime=datetime.now().second
-
-    try:
-        fname=filetowrite()
-        tmpy=readtemp()
-        print(datetime.now().isoformat())
-        print(tmpy)
-
-        with open(fname, 'a') as f:
-            f.write(str(IDstacji)+','+str(datetime.utcnow().year)+','+str(datetime.utcnow().month)+','+str(datetime.utcnow().day)+','+str(datetime.utcnow().hour)+','+str(datetime.utcnow().minute)+','+str(datetime.utcnow().second)+','+str(date2matlab(datetime.now()))+','+str(tmpy[0])+','+str(tmpy[1])+'\n')
-            time.sleep(0.7)
-            f.closed
-        errcnt = 0
-        if notify.enabled():
-        	notify.notify()
-
-    except Exception as e:
-        print("ERROR")
-        errcnt+=1
-        if errcnt > 10:
-        	sys.exit(66)
+	try:
+		measurements = measurehtu21(term,10,1)
+		t1 = threading.Thread(target=savetofile, args=(datadir,filenm,uuid.getnode(),['Temperature','Humidity'],measurements))
+		t1.start()
+		errcnt = 0
+	except Exception as e:
+		logging.warning("Temperature data read error: {}".format(e))
+		errcnt += 1
+		time.sleep(1)
+		if errcnt > 10:
+			logging.critical("HTU21 failed")
+			sys.exit(66)
