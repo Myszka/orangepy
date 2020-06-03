@@ -16,7 +16,7 @@ import threading
 from orangepisensors import filetowrite, savetofile, date2matlab
 import uuid
 
-datadir='/var/data/test'
+datadir='/var/data/htu21'
 filenm='htu21'
 
 format = "[%(asctime)s] %(message)s"
