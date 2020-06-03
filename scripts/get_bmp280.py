@@ -29,7 +29,7 @@ def measurebmp280(baro,timeavg=60,timeint=1):
 	tend = t0+timedelta(seconds=timeavg)
 
 	while datetime.now() < tend:
-		measurements.append([datetime.now(),[round(baro.get_pressure(,2), round(baro.get_temperature(),2)]])
+		measurements.append([datetime.now(),[round(baro.get_pressure(),2), round(baro.get_temperature(),2)]])
 		logging.info("Pressure: %f, Temperature: %f" % (measurements[-1][1][0],measurements[-1][1][1]))
 
 		if notify.enabled():
