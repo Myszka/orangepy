@@ -205,7 +205,7 @@ def sendtosrv(id,sensor,parameters,measurements,srv):
 
 
 	return r.status_code
-	#payload = {'station': 1500100901, 'date':1591286561.7474, 'sensor':'pms7003', 'parameters':'pm1|pm25|pm100|', 'values':'10|22|33|'}
+#payload = {'station': 1500100901, 'date':1591286561.7474, 'sensor':'pms7003', 'parameters':'pm1|pm25|pm100|', 'values':'10|22|33|'}
 
 
 try:
@@ -225,7 +225,7 @@ while True:
 	try:
 		measurements = measurehtu21(term,60,1)
 		t1 = threading.Thread(target=savetofile, args=(datadir,filenm,uuid.getnode(),['Temperature','Humidity'],measurements))
-		t2 = threading.Thread(target=sendtodb, args=(uuid.getnode(),filenm,['Temperature','Humidity'],measurements))
+		t2 = threading.Thread(target=sendtosrv, args=(uuid.getnode(),filenm,['Temperature','Humidity'],measurements,srv))
 		t1.start()
 		t2.start()
 		errcnt = 0
