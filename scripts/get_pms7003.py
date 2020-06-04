@@ -13,11 +13,13 @@ import sd_notify
 import os
 import logging
 import threading
-from orangepisensors import filetowrite, savetofile, date2matlab, readbit, checkval, blink
+from orangepisensors import filetowrite, savetofile, date2matlab, readbit, checkval, blink, server, sendtosrv
 import uuid
 
 datadir='/var/data/pms7003'
 filenm='pms7003'
+srv = server('http://mqtt.lio.edu.pl',8291,'pkin')
+
 
 format = "[%(asctime)s] %(message)s"
 logging.basicConfig(format=format, level=logging.INFO, datefmt="%Y-%m-%d %H:%M:%S")
@@ -87,13 +89,18 @@ if notify.enabled():
 	notify.ready()
 	notify.status("Measuring ...")
 
-logging.warning("Main loop of PMS7003 ready")
+logging.warning("Main loop of PMS7003 ready, synchronizing to full minutes.")
+
+t = datetime.now()
+time.sleep(59-t.second+(1e6-t.microsecond)/1e6)
 
 while True:
 	try:
 		measurements = measurepms7003()
 		t1 = threading.Thread(target=savetofile, args=(datadir,filenm,uuid.getnode(),['PM1','PM2.5','PM10','Bin0','Bin1','Bin2','Bin3','Bin4','Bin5'],measurements))
+		t2 = threading.Thread(target=sendtosrv, args=(srv,uuid.getnode(),filenm,['PM1','PM2.5','PM10','Bin0','Bin1','Bin2','Bin3','Bin4','Bin5'],measurements))
 		t1.start()
+		t2.start()
 		errcnt = 0
 	except Exception as e:
 		logging.critical("PMS7003 data read error: {}".format(e))

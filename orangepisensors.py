@@ -2,6 +2,24 @@ from datetime import datetime, timedelta
 import os
 import logging
 import subprocess
+import sqlite3
+import requests
+
+class server(object):
+	"""Simple server connection class."""
+
+	def __init__(self, addr, port, subsite='', method='POST'):
+		super(server, self).__init__()
+		self.addr = addr
+		self.port = port
+		self.subsite = subsite
+		self.method = method
+
+	def __repr__(self):
+		return self.addr+":"+str(self.port)+'/'+self.subsite
+
+	def __str__(self):
+		return self.addr+":"+str(self.port)+'/'+self.subsite
 
 def blink(led=0):
 	red = "red\:status"
@@ -64,18 +82,64 @@ def savetofile(datadir,filenm,id,parameters,measurements):
 
 	return fname
 
-class server(object):
-	"""Simple server connection class."""
+def sendtodb(dbname='/tmp/msmt.sqlite3',id,sensor,parameters,measurements):
+	try:
+		conn = sqlite3.connect(dbname)
+		c = conn.cursor()
+	except Exception as e:
+		logging.critical('SQLite errror: %s' % e)
 
-	def __init__(self, addr, port, subsite='', method='POST'):
-		super(server, self).__init__()
-		self.addr = addr
-		self.port = port
-		self.subsite = subsite
-		self.method = method
+	if type(measurements) is not list:
+		logging.warning("Measurements error, no data")
+		return 2
 
-	def __repr__(self):
-		return self.addr+":"+str(self.port)+'/'+self.subsite
+	logging.warning("Saving to database SQLite %s" % dbname)
 
-	def __str__(self):
-		return self.addr+":"+str(self.port)+'/'+self.subsite
+	savevalues=[]
+	for ms in measurements:
+		dt = ms[0].strftime('%Y-%m-%d %H:%M:%S')
+		for v in range(len(ms[1])):
+			savevalues.append((id,dt,sensor,parameters[v],ms[1][v]))
+	c.executemany('INSERT INTO msmt VALUES (?,?,?,?,?)', savevalues)
+	conn.commit()
+	conn.close()
+	return dbname
+
+def sendtosrv(srv,id,sensor,parameters,measurements):
+	''' Function to calcaulate mean value and send it to server. Time resolution is minutely.'''
+	if type(measurements) is not list:
+		logging.warning("Measurements error, wrond datatype")
+		return 2
+	if len(measurements) == 0:
+		logging.warning("Measurements error, empty table.")
+		return 3
+
+	try:
+		msmtminute = datetime.strptime(measurements[int(len(measurements)/2)][0].strftime('%Y-%m-%d %H:%M:00'),'%Y-%m-%d %H:%M:%S').timestamp()
+		lenparams = len(parameters)
+		lenmsmt = len(measurements)
+		values=[]
+		for ms in range(lenmsmt):
+			for v in range(lenparams):
+				values.insert(ms*lenparams+v,measurements[ms][1][v])
+
+		values = ''.join([ str((sum(values[i::lenparams])/lenmsmt))+'|' for i in range(lenparams)])
+		parameters = ''.join(s+'|' for s in parameters)
+
+		payload = {
+		'station' : id,
+		'sensor' : sensor,
+		'date' : msmtminute,
+		'parameters' : parameters,
+		'values' : values,
+		'count' : lenparams,
+		## TODO: create proper CRC function or hash/oath to verify secret keys
+		'crc' : 13
+		}
+		logging.warning("Values: %s, Sending to server: %s" % (values,str(srv)))
+		r = requests.post(str(srv),params=payload)
+		return r.status_code
+
+	except Exception as e:
+		logging.critical('Sending error: %s' % e)
+		return 4

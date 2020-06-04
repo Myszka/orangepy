@@ -20,7 +20,7 @@ conf = glob('conf/*')
 setup(
     name="orangepy",
 
-    version='0.2.0',
+    version='0.2.5',
     license='GPLv3',
 
     description='PolandAOD set of scripts for environmental measurements based on Orange Pi with armbian',
