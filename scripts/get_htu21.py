@@ -13,15 +13,18 @@ import sd_notify
 from datetime import datetime,timedelta
 import logging
 import threading
-from orangepisensors import filetowrite, savetofile, date2matlab
+from orangepisensors import filetowrite, savetofile, date2matlab, server
 import uuid
+import sqlite3
+import requests
 
 datadir='/var/data/htu21'
 filenm='htu21'
+srv = server('http://mqtt.lio.edu.pl',8000,'pkin')
 
 format = "[%(asctime)s] %(message)s"
 logging.basicConfig(format=format, level=logging.INFO ,datefmt="%Y-%m-%d %H:%M:%S")
-logging.root.setLevel(logging.WARNING)
+#logging.root.setLevel(logging.WARNING)
 
 logging.warning("Starting HTU21")
 
@@ -138,6 +141,72 @@ def measurehtu21(termometr,timeavg=60,timeint=1):
 	logging.warning("Temperature: %f, Humidity: %f" % (measurements[-1][1][0],measurements[-1][1][1]))
 	return measurements
 
+def sendtodb(id,sensor,parameters,measurements):
+	try:
+		fname = '/home/mich/msmt.sql'
+		conn = sqlite3.connect(fname)
+		c = conn.cursor()
+	except Exception as e:
+		logging.critical('SQLite errror: %s' % e)
+
+	if type(measurements) is not list:
+		logging.warning("Measurements error, no data")
+		return 2
+
+	logging.warning("Saving to database SQLite %s" % fname)
+
+	savevalues=[]
+	for ms in measurements:
+		dt = ms[0].strftime('%Y-%m-%d %H:%M:%S')
+		for v in range(len(ms[1])):
+			savevalues.append((id,dt,sensor,parameters[v],ms[1][v]))
+	c.executemany('INSERT INTO msmt VALUES (?,?,?,?,?)', savevalues)
+	conn.commit()
+	conn.close()
+	return fname
+
+def sendtosrv(id,sensor,parameters,measurements,srv):
+	''' Function to calcaulate mean value and send it to server. Time resolution is minutely.'''
+	if type(measurements) is not list:
+		logging.warning("Measurements error, no data")
+		return 2
+	if len(measurements) == 0 or len(parameters) != len(measurements):
+		logging.warning("Measurements error, no data. Wrong number of parameters.")
+		return 3
+
+	try:
+		msmtminute = measurement[int(len(ms)/2)][0].strftime('%Y-%m-%d %H:%M:00')
+		lenparams = len(parameters)
+		lenmsmt = len(measurements)
+		values=[]
+		for ms in range(lenmsmt):
+			for v in range(lenparams):
+				values.insert(ms*lenparams+v,measurements[ms][1][v])
+
+	 	values = ''.join([ str((sum(values[i::lenparams])/lenp))+'|' for i in range(lenparams)])
+		parameters = ''.join(s+'|' for s in parameters)
+	except Exception as e:
+		logging.critical('Measurements parsing error: %s' % e)
+
+
+	payload = {
+	'station' : id,
+	'sensor' : sensor,
+	'date' : msmtminute,
+	'parameters' : parameters,
+	'values' : values
+	}
+
+	logging.warning("Sending to server: " % str(srv))
+	try:
+		r = requests.get(str(srv),params=payload)
+	except Exception as e:
+		logging.critical('Sending error: %s' % e)
+
+
+	return r.status_code
+	#payload = {'station': 1500100901, 'date':1591286561.7474, 'sensor':'pms7003', 'parameters':'pm1|pm25|pm100|', 'values':'10|22|33|'}
+
 
 try:
 	term = HTU21D()
@@ -154,9 +223,11 @@ errcnt = 0
 
 while True:
 	try:
-		measurements = measurehtu21(term)
+		measurements = measurehtu21(term,60,1)
 		t1 = threading.Thread(target=savetofile, args=(datadir,filenm,uuid.getnode(),['Temperature','Humidity'],measurements))
+		t2 = threading.Thread(target=sendtodb, args=(uuid.getnode(),filenm,['Temperature','Humidity'],measurements))
 		t1.start()
+		t2.start()
 		errcnt = 0
 	except Exception as e:
 		logging.critical("Temperature data read error: {}".format(e))
