@@ -82,7 +82,7 @@ def savetofile(datadir,filenm,id,parameters,measurements):
 
 	return fname
 
-def sendtodb(dbname='/tmp/msmt.sqlite3',id,sensor,parameters,measurements):
+def sendtodb(dbname,id,sensor,parameters,measurements):
 	try:
 		conn = sqlite3.connect(dbname)
 		c = conn.cursor()

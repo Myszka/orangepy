@@ -147,15 +147,15 @@ except Exception as e:
 	logging.critical("HTU21 initialization failed: %s" % e)
 	sys.exit(55)
 
-if notify.enabled():
-	notify.ready()
-	notify.status("Measuring ...")
-
 logging.warning("Main loop of HTU21 ready, synchronizing to full minutes.")
 errcnt = 0
 
 t = datetime.now()
 time.sleep(59-t.second+(1e6-t.microsecond)/1e6)
+
+if notify.enabled():
+	notify.ready()
+	notify.status("Measuring ...")
 
 while True:
 	try:

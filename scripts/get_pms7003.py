@@ -85,14 +85,15 @@ def measurepms7003(port='/dev/ttyS1',timeavg=60,timeint=1):
 	logging.warning("PM 0: %d, PM 2.5: %d, PM 10: %d, bin 0: %d" % (measurements[-1][1][0],measurements[-1][1][1],measurements[-1][1][2],measurements[-1][1][3]))
 	return measurements
 
-if notify.enabled():
-	notify.ready()
-	notify.status("Measuring ...")
 
 logging.warning("Main loop of PMS7003 ready, synchronizing to full minutes.")
 
 t = datetime.now()
 time.sleep(59-t.second+(1e6-t.microsecond)/1e6)
+
+if notify.enabled():
+	notify.ready()
+	notify.status("Measuring ...")
 
 while True:
 	try:
