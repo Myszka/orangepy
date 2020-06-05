@@ -1,3 +1,4 @@
+#!/usr/bin/python
 import requests
 import datetime, time
 import socket

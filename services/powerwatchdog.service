@@ -3,7 +3,7 @@ Description=PolandAOD Tasmota Power Relay watchdogr
 
 [Service]
 Type=simple
-ExecStart=/usr/local/bin/powerwatchdog &
+ExecStart=/usr/local/bin/powerwatchdog.py &
 Type=notify
 WatchdogSec=15
 Restart=on-failure
