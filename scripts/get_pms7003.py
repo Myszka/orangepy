@@ -95,6 +95,8 @@ if notify.enabled():
 	notify.ready()
 	notify.status("Measuring ...")
 
+errcnt = 0
+
 while True:
 	try:
 		measurements = measurepms7003()

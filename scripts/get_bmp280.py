@@ -9,15 +9,17 @@ from datetime import datetime,timedelta
 from bmp280 import BMP280
 import logging
 import threading
-from orangepisensors import filetowrite, savetofile, date2matlab
+from orangepisensors import filetowrite, savetofile, date2matlab, server, sendtosrv
 import uuid
 
 datadir='/var/data/bmp280'
 filenm='bmp280'
+srv = server('http://mqtt.lio.edu.pl',8291,'pkin')
 
 format = "[%(asctime)s] %(message)s"
 logging.basicConfig(format=format, level=logging.INFO ,datefmt="%Y-%m-%d %H:%M:%S")
 logging.root.setLevel(logging.WARNING)
+logging.warning("Starting BMP280")
 
 notify = sd_notify.Notifier()
 if notify.enabled():
@@ -48,18 +50,25 @@ except Exception as e:
 	logging.critical("BMP280 initialization failed: %s" % e)
 	sys.exit(55)
 
+
+
+logging.warning("Main loop of BMP280 ready, synchronizing to full minutes.")
+t = datetime.now()
+time.sleep(59-t.second+(1e6-t.microsecond)/1e6)
+
 if notify.enabled():
 	notify.ready()
 	notify.status("Measuring ...")
 
-logging.warning("Main loop of BMP280 ready")
 errcnt = 0
 
 while True:
 	try:
 		measurements = measurebmp280(bmp280)
 		t1 = threading.Thread(target=savetofile, args=(datadir,filenm,uuid.getnode(),['Pressure','Temperature'],measurements))
+		t2 = threading.Thread(target=sendtosrv, args=(srv,uuid.getnode(),filenm,['Pressure','Temperature'],measurements))
 		t1.start()
+		t2.start()
 		errcnt = 0
 	except Exception as e:
 		logging.critical("Pressure data read error: {}".format(e))
