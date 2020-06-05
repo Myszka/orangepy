@@ -1,0 +1,13 @@
+[Unit]
+Description=PolandAOD Tasmota Power Relay watchdogr
+
+[Service]
+Type=simple
+ExecStart=/usr/local/bin/powerwatchdog &
+Type=notify
+WatchdogSec=15
+Restart=on-failure
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target
