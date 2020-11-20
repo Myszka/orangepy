@@ -4,6 +4,8 @@ import logging
 import subprocess
 import sqlite3
 import requests
+import ntplib
+import logging
 
 class server(object):
 	"""Simple server connection class."""
@@ -36,6 +38,21 @@ def blink(led=0):
 		os.system("echo 0 > /sys/class/leds/orangepi\:"+colour+"/brightness")
 	elif (int(result)==0):
 		os.system("echo 1 > /sys/class/leds/orangepi\:"+colour+"/brightness")
+
+def checkntp(url='localhost'):
+
+	cnt = ntplib.NTPClient()
+	offs = 999
+	while offs**2>10:
+		try:
+			logging.info('NTP works fine')
+			response = cnt.request('localhost', version=3)
+			offs = response.offset
+		except:
+			logging.warning('NTP error restarting ...')
+			os.system('systemctl restart ntp')
+			time.sleep(10)
+	return response.offset
 
 def readbit(inp,bit):
 	'''

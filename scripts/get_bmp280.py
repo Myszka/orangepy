@@ -9,7 +9,7 @@ from datetime import datetime,timedelta
 from bmp280 import BMP280
 import logging
 import threading
-from orangepisensors import filetowrite, savetofile, date2matlab, server, sendtosrv
+from orangepisensors import filetowrite, savetofile, date2matlab, server, sendtosrv, checkntp
 import uuid
 
 datadir='/var/data/bmp280'
@@ -18,6 +18,9 @@ srv = server('http://mqtt.lio.edu.pl',8291,'pkin')
 
 format = "[%(asctime)s] %(message)s"
 logging.basicConfig(format=format, level=logging.INFO ,datefmt="%Y-%m-%d %H:%M:%S")
+
+checkntp()
+
 logging.root.setLevel(logging.WARNING)
 logging.warning("Starting BMP280")
 
