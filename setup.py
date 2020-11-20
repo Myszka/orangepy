@@ -33,7 +33,7 @@ setup(
 	py_modules =['orangepisensors'],
     scripts=script,
     data_files=[('share/orangepy', services),('etc', conf)],
-    install_requires=['smbus','bmp280','pyserial', 'spidev', 'sd-notify'],
+    install_requires=['smbus','bmp280','pyserial', 'spidev', 'sd-notify','ntplib'],
 )
 
 # copy unit files to /etc/ folder
